@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}トップページ | KITinder{% endblock %}
+{% block contents %}
+<!-- 投稿フォーム -->
+<h3>ここから質問してみよう</h3>
+<hr>
+<div class="card mb-5 text-left">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-2">
+                <img src="{% if user.thumbnail %}{{ user.thumbnail.url }}{% else %}{% static 'images/no_photo.png' %}{% endif %}"
+                     class="rounded-circle post-photo">
+            </div>
+            <div class="col-10">
+                <form method="post" action="{% url 'timeline:create' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <textarea class="form-control" id="exampleFormControlTextarea1" name="text" rows="3"
+                                  placeholder="例(質問者)
+この問題教えてくれませんか？
+"></textarea>
+                    </div>
+                    <div class="form-group mt-1">
+                        <label for="file">画像アップロード</label>
+                        <input type="file" class="form-control-file" id="exampleFormControlFile1" name="photo">
+                    </div>
+                    <button class="btn btn-block" style="background-color:#e70da2;color:#f8f4f7" type="submit">質問</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<h3>タイムライン</h3>
+<hr>
+
+<!-- 投稿一覧 -->
+{% for post in object_list %}
+<div class="card mb-5 text-left">
+    <div class="card-body">
+        
+        <div class="row">
+            <div class="col-1">
+                <a href="{% url 'accounts:detail' post.author.id %}">
+                    <img
+                            src="{% if post.author.thumbnail %}{{ post.author.thumbnail.url }}{% else %}{% static 'images/no_photo.png' %}{% endif %}"
+                            class="rounded-circle profile-post-photo">
+                </a>
+            </div>
+            <div class="col-10 ml-3">
+                <a href="{% url 'accounts:detail' post.author.id %}" class="text-secondary">{{ post.author }}</a><br>
+                <small class="text-muted">{{ post.created_at | date:"n月j日 H時i分" }}</small>
+            </div>
+        </div>
+        <p class="card-text mt-2">{{ post.text | linebreaks }}</p>
+        <button class="btn btn-link p-0 {% if user in post.get_like %}disabled post-liked text-secondary{% else %}post-like text-info{% endif %}"
+                id="post-like-{{ post.id }}" data-id="{{ post.id }}">
+            いいね
+        </button>
+        <span class="badge badge-info" id="like-count-{{ post.id }}">
+            {% if post.get_like %}{{ post.get_like | length }}{% endif %}
+        </span>
+        {% if post.author.id == user.id %}
+        <form method="post" action="{% url 'timeline:delete' post.id %}" class="d-inline">
+            {% csrf_token %}
+            <button class="btn btn-link text-info p-0 ml-3" type="submit" onclick='return confirm("削除してよろしいですか？");'>
+                削除
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    {% if post.post_photo %}
+    <img class="card-img-bottom" src="{{ post.post_photo.url }}" alt="Card image cap">
+   <a href="post.post_photo" data-lightbox="group"><img src="post.post_photo" width="300"></a>
+    {% endif %}
+    <div class="card mb-5 text-left">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-2">
+                    <img src="{% if user.thumbnail %}{{ user.thumbnail.url }}{% else %}{% static 'images/no_photo.png' %}{% endif %}"
+                         class="rounded-circle post-photo">
+                </div>
+                <div class="col-10">
+                    <form method="post" action="{% url 'timeline:create' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <textarea class="form-control" id="exampleFormControlTextarea1" name="text" rows="3"
+                                      placeholder="例(回答者)
+To 質問者ユーザー　　　　　　　　　　　　こうやって解くといいですよ"></textarea>
+                        </div>
+                        <div class="form-group mt-1">
+                            <label for="file">画像アップロード</label>
+                            <input type="file" class="form-control-file" id="exampleFormControlFile1" name="photo">
+                        </div>
+                        <button class="btn btn-block" style="background-color:#e70da2;color:#f8f4f7" type="submit">回答</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.7.1/css/lightbox.css" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.7.1/js/lightbox.min.js" type="text/javascript"></script>
+<!-- ページネーション -->
+<nav>
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link text-info" href="?page={{ page_obj.previous_page_number }}" tabindex="-1">&laquo;</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">
+      &laquo;</span></a>
+        </li>
+        {% endif %}
+        {% for i in page_obj.paginator.page_range %}
+        {% if page_obj.number == i %}
+        <li class="page-item disabled"><span class="page-link">{{ i }}</span></li>
+        {% else %}
+        <li class="page-item"><a class="page-link text-info" href="?page={{ i }}">{{ i }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link text-info" href="?page={{ page_obj.next_page_number }}">&raquo;</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">&raquo;</span>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endblock %}
